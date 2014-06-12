@@ -1,0 +1,52 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit" xmlns:context="http://www.springframework.org/schema/context" 
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:jee="http://www.springframework.org/schema/jee" 
+	xsi:schemaLocation="http://www.springframework.org/schema/rabbit 
+	                    http://www.springframework.org/schema/rabbit/spring-rabbit-1.0.xsd
+ 					    http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-3.2.xsd
+						http://www.springframework.org/schema/util 
+						http://www.springframework.org/schema/util/spring-util-3.2.xsd
+						http://www.springframework.org/schema/tx
+						http://www.springframework.org/schema/tx/spring-tx.xsd
+						http://www.springframework.org/schema/jee 
+						http://www.springframework.org/schema/jee/spring-jee-3.2.xsd">
+
+	
+	<!-- Rabbitmq configuration -->
+	
+	<rabbit:connection-factory id="connectionFactory" username="guest" password="guest" host="localhost"/>
+
+	<rabbit:template id="amqpTemplate" connection-factory="connectionFactory" />
+
+	<rabbit:admin connection-factory="connectionFactory" />
+
+	<rabbit:queue name="helloworld.queue" />
+	
+	<rabbit:listener-container connection-factory="connectionFactory">
+    	<rabbit:listener ref="workerMessageListener" queues="helloworld.queue" />
+    </rabbit:listener-container>
+
+	<!-- End Rabbitmq configuration -->
+    
+    
+    <bean id="workerMessageListener" class="com.consumer.model.WorkerMessageListener">
+		<constructor-arg type="com.consumer.model.MessageWorker" ref="webParserMessageWorker"/>
+	</bean>
+    
+    <bean id="webParserMessageWorker" class="com.consumer.impl.WebParserMessageWorker">
+    	<constructor-arg type="com.webparser.model.WebParser" ref="jsoupWebParser"/>
+    </bean>
+	
+    <bean id="jsoupWebParser" class="com.webparser.impl.JsoupWebParser">
+    	<constructor-arg>
+    		<util:list value-type="java.lang.String">
+    			<value>a[href]</value>
+    		</util:list>
+    	</constructor-arg>
+    	<property name="userAgent" value="Chrome"/>
+    </bean>
+</beans>
